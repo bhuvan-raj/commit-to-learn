@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "616155691068",
+    "project_id": "commit-to-learn",
+    "storage_bucket": "commit-to-learn.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:616155691068:android:c0ed9cc9a25c3db8e4eb39",
+        "android_client_info": {
+          "package_name": "com.example.commit_to_learn"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "616155691068-4f2d6kfrn85ro5e4vt9fqd768tgj8pjn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCe2SDeMAnjw0QTPlc3lnnMRA4ZCtmAb0g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "616155691068-4f2d6kfrn85ro5e4vt9fqd768tgj8pjn.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "616155691068-b4l0i0vg7m4k2g4ngr93mnngvke7eapi.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.commitToLearn"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
