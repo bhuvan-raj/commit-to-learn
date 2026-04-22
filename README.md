@@ -1,6 +1,5 @@
 # commit_to_learn
 
-A new Flutter project.
 
 ## Getting Started
 
