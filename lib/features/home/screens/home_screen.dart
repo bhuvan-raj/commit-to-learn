@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:commit_to_learn/core/theme/app_theme.dart';
 import 'package:commit_to_learn/data/models/user_stats.dart';
-import '../widgets/user_avatar.dart';
-import '../widgets/progress_snapshot_card.dart';
-import '../widgets/quiz_cta_banner.dart';
-import '../widgets/quick_action_tile.dart';
+import 'package:commit_to_learn/features/auth/providers/auth_providers.dart';
+import 'package:commit_to_learn/features/home/widgets/user_avatar.dart';
+import 'package:commit_to_learn/features/home/widgets/progress_snapshot_card.dart';
+import 'package:commit_to_learn/features/home/widgets/quiz_cta_banner.dart';
+import 'package:commit_to_learn/features/home/widgets/quick_action_tile.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _currentNavIndex = 0;
-
-  final UserStats _stats = UserStats.mock;
 
   void _onNavTapped(int index) {
     setState(() => _currentNavIndex = index);
@@ -26,50 +26,106 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Pull real user from Firebase
+    final appUserAsync = ref.watch(appUserProvider);
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
-              const SizedBox(height: 24),
-              ProgressSnapshotCard(stats: _stats),
-              const SizedBox(height: 20),
-              QuizCtaBanner(
-                onStartPressed: () {
-                  // TODO: navigate to quiz selection screen
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Starting quiz...')),
-                  );
-                },
-              ),
-              const SizedBox(height: 20),
-              Row(
+        child: appUserAsync.when(
+          data: (appUser) {
+            // Convert AppUser to UserStats (or use mock for Linux local mode)
+            final stats = appUser != null
+                ? UserStats(
+                    name: appUser.name,
+                    initials: appUser.initials,
+                    totalQuizzes: appUser.totalQuizzes,
+                    questionsAnswered: appUser.questionsAnswered,
+                    accuracyRate: appUser.accuracyRate,
+                  )
+                : UserStats.mock; // Fallback for Linux/local mode
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: QuickActionTile(
-                      label: 'Tool\nSpecific',
-                      onTap: () {
-                        // TODO: navigate to tool-specific quiz screen
-                      },
+                  _buildHeader(stats),
+                  const SizedBox(height: 24),
+                  ProgressSnapshotCard(stats: stats),
+                  const SizedBox(height: 20),
+                  QuizCtaBanner(
+                    onStartPressed: () {
+                      // TODO: navigate to quiz selection screen
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Starting quiz...')),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: QuickActionTile(
+                          label: 'Tool\nSpecific',
+                          onTap: () {
+                            // TODO: navigate to tool-specific quiz screen
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: QuickActionTile(
+                          label: 'FAQs',
+                          onTap: () {
+                            // TODO: navigate to FAQ screen
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            );
+          },
+          loading: () => const Center(
+            child: CircularProgressIndicator(
+              color: AppColors.primary,
+            ),
+          ),
+          error: (e, stack) => Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    color: Colors.red,
+                    size: 48,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Error loading user data',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textDark,
                     ),
                   ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: QuickActionTile(
-                      label: 'FAQs',
-                      onTap: () {
-                        // TODO: navigate to FAQ screen
-                      },
+                  const SizedBox(height: 8),
+                  Text(
+                    e.toString(),
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13,
+                      color: AppColors.textMedium,
                     ),
+                    textAlign: TextAlign.center,
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
-            ],
+            ),
           ),
         ),
       ),
@@ -77,36 +133,39 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(UserStats stats) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        RichText(
-          text: TextSpan(
-            children: [
-              TextSpan(
-                text: 'Welcome,\n',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textDark,
-                  height: 1.1,
+        Flexible(
+          child: RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: 'Welcome,\n',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textDark,
+                    height: 1.1,
+                  ),
                 ),
-              ),
-              TextSpan(
-                text: '${_stats.name}!',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textDark,
-                  height: 1.3,
+                TextSpan(
+                  text: '${stats.name}!',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textDark,
+                    height: 1.3,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-        UserAvatar(initials: _stats.initials),
+        const SizedBox(width: 12),
+        UserAvatar(initials: stats.initials),
       ],
     );
   }
