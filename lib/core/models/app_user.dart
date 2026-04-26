@@ -42,10 +42,16 @@ class AppUser {
 
   // ── Firestore serialisation ──────────────────────────────────────────────
 
+  /// Use this when you have a direct DocumentSnapshot from Firebase
   factory AppUser.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+    return AppUser.fromMap(data, doc.id);
+  }
+
+  /// NEW: Use this when you have a Map (e.g. in Leaderboards or Lists)
+  factory AppUser.fromMap(Map<String, dynamic> data, [String? id]) {
     return AppUser(
-      uid: doc.id,
+      uid: id ?? data['uid'] ?? '',
       name: data['name'] ?? '',
       email: data['email'] ?? '',
       photoUrl: data['photoUrl'],
